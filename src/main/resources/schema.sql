@@ -1,5 +1,12 @@
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS items;
+DROP TABLE IF EXISTS carts;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE IF NOT EXISTS "items" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"name" varchar(256) NOT NULL,
 	"description" varchar(255) NOT NULL,
 	"item_image" bytea NOT NULL,
@@ -8,20 +15,20 @@ CREATE TABLE IF NOT EXISTS "items" (
 );
 
 CREATE TABLE IF NOT EXISTS "users" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"name" varchar(256) NOT NULL,
 	"email" varchar(256) NOT NULL,
 	PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "carts" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"user_id" bigint NOT NULL,
 	PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "cart_items" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"cart_id" bigint NOT NULL,
 	"item_id" bigint NOT NULL,
 	"quantity" bigint NOT NULL,
@@ -29,13 +36,13 @@ CREATE TABLE IF NOT EXISTS "cart_items" (
 );
 
 CREATE TABLE IF NOT EXISTS "orders" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"user_id" bigint NOT NULL,
 	PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "order_items" (
-	"id" serial NOT NULL UNIQUE,
+	"id" bigserial NOT NULL UNIQUE,
 	"order_id" bigint NOT NULL,
 	"item_id" bigint NOT NULL,
 	"quantity" bigint NOT NULL,

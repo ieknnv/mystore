@@ -4,3 +4,11 @@ spring:
     username: mystore_user
     password: mystore_password
     driver: org.postgresql.Driver
+  jpa:
+    hibernate.ddl-auto: validate
+    properties.hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  servlet:
+    context-path: /mystore
