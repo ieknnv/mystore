@@ -12,3 +12,7 @@ spring:
 server:
   servlet:
     context-path: /mystore
+
+application:
+  userId: 1
+  itemsPerLine: 3
