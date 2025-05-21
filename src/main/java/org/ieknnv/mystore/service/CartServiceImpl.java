@@ -1,15 +1,19 @@
 package org.ieknnv.mystore.service;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.ieknnv.mystore.dto.CartPageDto;
 import org.ieknnv.mystore.entity.Cart;
 import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Item;
 import org.ieknnv.mystore.enums.CartAction;
+import org.ieknnv.mystore.mapper.ItemMapper;
 import org.ieknnv.mystore.repository.CartRepository;
 import org.ieknnv.mystore.repository.ItemRepository;
 import org.springframework.stereotype.Service;
@@ -72,6 +76,28 @@ public class CartServiceImpl implements CartService {
         return cart.getCartItems()
                 .stream()
                 .collect(Collectors.toMap(CartItem::getItem, CartItem::getQuantity));
+    }
+
+    @Override
+    public CartPageDto getCartForUser(long userId) {
+        Cart cart = cartRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("cart not found"));
+        var cartItems = cart.getCartItems();
+        if (cartItems.isEmpty()) {
+            return CartPageDto.builder()
+                    .itemDtoList(Collections.emptyList())
+                    .cartEmpty(true)
+                    .total(BigDecimal.ZERO)
+                    .build();
+        }
+        BigDecimal total = cartItems.stream()
+                .map(ci -> ci.getItem().getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return CartPageDto.builder()
+                .itemDtoList(ItemMapper.toDto(cartItems))
+                .cartEmpty(false)
+                .total(total)
+                .build();
     }
 
     private Optional<CartItem> getCartItem(Set<CartItem> cartItems, CartItem cartItem) {
