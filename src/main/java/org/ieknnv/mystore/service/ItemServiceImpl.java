@@ -3,6 +3,7 @@ package org.ieknnv.mystore.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
+    private final CartService cartService;
     private final ItemRepository itemRepository;
 
     @Value("${application.itemsPerLine:3}")
@@ -51,21 +53,20 @@ public class ItemServiceImpl implements ItemService {
         var itemPage = StringUtils.isEmpty(search) ? itemRepository.findAll(pageable) :
                 itemRepository.findAllBySearchLine(search, pageable);
         var items = itemPage.getContent();
-        // TODO item count for user
         return MainPageItemsDto.builder()
-                .items(chunkItems(items))
+                .items(chunkItems(items, cartService.getCartItemsForUser(userId)))
                 .page(itemPage)
                 .build();
     }
 
-    private List<List<ItemDto>> chunkItems(List<Item> items) {
+    private List<List<ItemDto>> chunkItems(List<Item> items, Map<Item, Long> itemCount) {
         List<List<ItemDto>> chunks = new ArrayList<>();
         int listSize = items.size();
         for (int i = 0; i < listSize; i += itemsPerLine) {
             int end = Math.min(listSize, i + itemsPerLine);
             List<Item> subList = new ArrayList<>(items.subList(i, end));
             chunks.add(subList.stream()
-                    .map(ItemMapper::toDto)
+                    .map(item -> ItemMapper.toDto(item, itemCount.getOrDefault(item, 0L)))
                     .collect(Collectors.toList()));
         }
         return chunks;

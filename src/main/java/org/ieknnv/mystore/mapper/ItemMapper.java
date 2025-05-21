@@ -20,13 +20,13 @@ public final class ItemMapper {
                 build();
     }
 
-    public static ItemDto toDto(Item entity) {
+    public static ItemDto toDto(Item entity, long quantity) {
         return ItemDto.builder()
                 .id(entity.getId())
                 .title(entity.getName())
                 .description(entity.getDescription())
                 .price(entity.getPrice())
-                .count(0) // TODO actual count
+                .count(quantity)
                 .build();
     }
 }
