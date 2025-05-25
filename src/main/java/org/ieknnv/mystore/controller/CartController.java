@@ -38,4 +38,10 @@ public class CartController {
         cartService.updateCart(userId, itemId, CartAction.fromValue(action));
         return "redirect:/cart/items";
     }
+
+    @PostMapping("/buy")
+    public String buyCart() {
+        long orderId = cartService.buyCart(userId);
+        return "redirect:/main/items"; // todo redirect
+    }
 }

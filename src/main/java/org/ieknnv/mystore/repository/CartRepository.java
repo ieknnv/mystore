@@ -3,7 +3,6 @@ package org.ieknnv.mystore.repository;
 import java.util.Optional;
 
 import org.ieknnv.mystore.entity.Cart;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

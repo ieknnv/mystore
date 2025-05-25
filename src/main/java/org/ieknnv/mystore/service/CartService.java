@@ -13,4 +13,6 @@ public interface CartService {
     Map<Item, Long> getCartItemsForUser(long userId);
 
     CartPageDto getCartForUser(long userId);
+
+    long buyCart(long userId);
 }

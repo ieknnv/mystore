@@ -12,7 +12,9 @@ import org.ieknnv.mystore.dto.CartPageDto;
 import org.ieknnv.mystore.entity.Cart;
 import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Item;
+import org.ieknnv.mystore.entity.User;
 import org.ieknnv.mystore.enums.CartAction;
+import org.ieknnv.mystore.exception.CartEmptyException;
 import org.ieknnv.mystore.mapper.ItemMapper;
 import org.ieknnv.mystore.repository.CartRepository;
 import org.ieknnv.mystore.repository.ItemRepository;
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
+    private final OrderService orderService;
+    private final UserService userService;
     private final CartRepository cartRepository;
     private final ItemRepository itemRepository;
 
@@ -98,6 +102,20 @@ public class CartServiceImpl implements CartService {
                 .cartEmpty(false)
                 .total(total)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public long buyCart(long userId) {
+        var cart = cartRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("cart not found"));
+        if (cart.getCartItems().isEmpty()) {
+            throw new CartEmptyException("cart is empty");
+        }
+        User user = userService.getUser(userId);
+        var newOrder = orderService.placeOrder(user, cart.getCartItems());
+        cart.getCartItems().clear();
+        cartRepository.save(cart);
+        return newOrder.getId();
     }
 
     private Optional<CartItem> getCartItem(Set<CartItem> cartItems, CartItem cartItem) {
