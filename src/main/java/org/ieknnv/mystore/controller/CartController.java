@@ -42,6 +42,6 @@ public class CartController {
     @PostMapping("/buy")
     public String buyCart() {
         long orderId = cartService.buyCart(userId);
-        return "redirect:/main/items"; // todo redirect
+        return "redirect:/orders/" + orderId + "?newOrder=true";
     }
 }
