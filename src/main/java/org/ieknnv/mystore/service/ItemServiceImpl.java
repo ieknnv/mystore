@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,15 @@ public class ItemServiceImpl implements ItemService {
                 .items(chunkItems(items, cartService.getCartItemsForUser(userId)))
                 .page(itemPage)
                 .build();
+    }
+
+    @Override
+    public ItemDto getItem(long userId, long itemId) {
+        Item item = itemRepository
+                .findById(itemId)
+                .orElseThrow(() -> new NoSuchElementException("item not found"));
+        var itemCount = cartService.getCartItemsForUser(userId);
+        return ItemMapper.toDto(item, itemCount.getOrDefault(item, 0L));
     }
 
     private List<List<ItemDto>> chunkItems(List<Item> items, Map<Item, Long> itemCount) {

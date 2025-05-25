@@ -1,5 +1,6 @@
 package org.ieknnv.mystore.controller;
 
+import org.ieknnv.mystore.dto.ItemDto;
 import org.ieknnv.mystore.dto.MainPageItemsDto;
 import org.ieknnv.mystore.enums.CartAction;
 import org.ieknnv.mystore.enums.SortOrder;
@@ -52,5 +53,21 @@ public class ItemController {
             @RequestParam("action") String action) {
         cartService.updateCart(userId, itemId, CartAction.fromValue(action));
         return "redirect:/main/items";
+    }
+
+    @GetMapping("/items/{id}")
+    public String getItem(Model model,
+            @PathVariable("id") long itemId) {
+        ItemDto item = itemService.getItem(userId, itemId);
+        model.addAttribute("item", item);
+        return "item";
+    }
+
+    @PostMapping("/items/{id}")
+    public String updateCartInItem(Model model,
+            @PathVariable("id") long itemId,
+            @RequestParam("action") String action) {
+        cartService.updateCart(userId, itemId, CartAction.fromValue(action));
+        return "redirect:/items/" + itemId;
     }
 }
