@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:storedb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_UPPER=false;
+    username: sa
+    password:
+    driver: org.h2.Driver
+  sql:
+    init.mode: always
+  jpa:
+    hibernate.ddl-auto: none
