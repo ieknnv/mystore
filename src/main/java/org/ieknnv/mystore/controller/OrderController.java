@@ -10,8 +10,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.reactive.result.view.Rendering;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,19 +25,20 @@ public class OrderController {
     private long userId;
 
     @GetMapping("/orders")
-    String getOrders(Model model) {
-        List<OrderDto> orderDtos = orderService.getOrders(userId);
-        model.addAttribute("orders", orderDtos);
-        return "orders";
+    Mono<Rendering> getOrders(Model model) {
+        Mono<List<OrderDto>> orderDtos = orderService.getOrders(userId);
+        return Mono.just(Rendering.view("orders")
+                .modelAttribute("orders", orderDtos)
+                .build());
     }
 
     @GetMapping("/orders/{id}")
-    String getOrder(Model model,
-            @PathVariable("id") long id,
+    Mono<Rendering> getOrder(@PathVariable("id") long id,
             @RequestParam(name = "newOrder", defaultValue = "false") boolean newOrder) {
-        OrderDto orderDto = orderService.getOrder(id);
-        model.addAttribute("order", orderDto);
-        model.addAttribute("newOrder", newOrder);
-        return "order";
+        Mono<OrderDto> orderDto = orderService.getOrder(id);
+        return Mono.just(Rendering.view("order")
+                .modelAttribute("order", orderDto)
+                .modelAttribute("newOrder", newOrder)
+                .build());
     }
 }

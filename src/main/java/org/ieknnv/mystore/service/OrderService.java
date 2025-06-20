@@ -1,18 +1,18 @@
 package org.ieknnv.mystore.service;
 
 import java.util.List;
-import java.util.Set;
 
+import org.ieknnv.mystore.dto.CartItemDetailDto;
 import org.ieknnv.mystore.dto.OrderDto;
-import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Order;
-import org.ieknnv.mystore.entity.User;
+
+import reactor.core.publisher.Mono;
 
 public interface OrderService {
 
-    Order placeOrder(User user, Set<CartItem> cartItems);
+    Mono<Order> placeOrder(long userId, List<CartItemDetailDto> cartItems);
 
-    List<OrderDto> getOrders(long userId);
+    Mono<List<OrderDto>> getOrders(long userId);
 
-    OrderDto getOrder(long orderId);
+    Mono<OrderDto> getOrder(long orderId);
 }

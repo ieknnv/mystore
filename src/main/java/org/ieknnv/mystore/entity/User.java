@@ -2,12 +2,10 @@ package org.ieknnv.mystore.entity;
 
 import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,18 +20,16 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 
-@Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "email", nullable = false)
+    @Column("email")
     private String email;
 
-    @Column(name = "name", nullable = false)
+    @Column("name")
     private String name;
 
     @Override

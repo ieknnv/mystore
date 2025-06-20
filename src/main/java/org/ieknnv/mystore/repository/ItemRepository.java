@@ -1,26 +1,28 @@
 package org.ieknnv.mystore.repository;
 
-import java.util.Optional;
-
 import org.ieknnv.mystore.entity.Item;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface ItemRepository extends JpaRepository<Item, Long> {
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-    @Query("SELECT i.itemImage FROM Item i WHERE i.id = :id")
-    Optional<byte[]> findItemImageById(@Param("id") Long id);
+@Repository
+public interface ItemRepository extends ReactiveSortingRepository<Item, Long>, ReactiveCrudRepository<Item, Long> {
+
+    @Query("SELECT item_image FROM items WHERE id = :id")
+    Mono<byte[]> findItemImageById(Long id);
 
     @Query("""
-    SELECT i
-    FROM Item AS i
-    WHERE LOWER(i.name) LIKE LOWER(CONCAT('%',:search,'%'))
-       OR LOWER(i.description) LIKE LOWER(CONCAT('%',:search,'%'))
+    SELECT id, name, description, item_image, price
+    FROM items
+    WHERE LOWER(name) LIKE LOWER(CONCAT('%',:search,'%'))
+       OR LOWER(description) LIKE LOWER(CONCAT('%',:search,'%'))
     """)
-    Page<Item> findAllBySearchLine(String search, Pageable pageable);
+    Flux<Item> findAllBySearchLine(String search, Pageable pageable);
+
+    Flux<Item> findAllBy(Pageable pageable);
 }

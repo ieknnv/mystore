@@ -3,16 +3,18 @@ package org.ieknnv.mystore.service;
 import java.util.Map;
 
 import org.ieknnv.mystore.dto.CartPageDto;
-import org.ieknnv.mystore.entity.Item;
+import org.ieknnv.mystore.entity.Order;
 import org.ieknnv.mystore.enums.CartAction;
+
+import reactor.core.publisher.Mono;
 
 public interface CartService {
 
-    void updateCart(long userId, long itemId, CartAction cartAction);
+    Mono<Void> updateCart(long userId, long itemId, CartAction cartAction);
 
-    Map<Item, Long> getCartItemsForUser(long userId);
+    Mono<Map<Long, Long>> getCartItemsForUser(long userId);
 
-    CartPageDto getCartForUser(long userId);
+    Mono<CartPageDto> getCartForUser(long userId);
 
-    long buyCart(long userId);
+    Mono<Order> buyCart(long userId);
 }

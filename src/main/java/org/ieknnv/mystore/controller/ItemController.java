@@ -1,7 +1,5 @@
 package org.ieknnv.mystore.controller;
 
-import org.ieknnv.mystore.dto.ItemDto;
-import org.ieknnv.mystore.dto.MainPageItemsDto;
 import org.ieknnv.mystore.enums.CartAction;
 import org.ieknnv.mystore.enums.SortOrder;
 import org.ieknnv.mystore.service.CartService;
@@ -15,8 +13,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.reactive.result.view.Rendering;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,45 +29,45 @@ public class ItemController {
     private long userId;
 
     @GetMapping("/")
-    public String redirectToAllItems(Model model) {
-        return "redirect:main/items";
+    public Mono<Rendering> redirectToAllItems() {
+        return Mono.just(Rendering.view("redirect:main/items").build());
     }
 
     @GetMapping("/main/items")
-    public String getAllItems(Model model,
-            @RequestParam(name = "search", defaultValue = "") String search,
+    public Mono<Rendering> getAllItems(@RequestParam(name = "search", defaultValue = "") String search,
             @RequestParam(name = "sort", defaultValue = "NO") SortOrder sort,
             @RequestParam(name = "pageSize", defaultValue = "10") int pageSize,
             @RequestParam(name = "pageNumber", defaultValue = "0") int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort.getSort());
-        MainPageItemsDto dto = itemService.getItems(userId, search, pageable);
-        model.addAttribute("paging", dto.getPage());
-        model.addAttribute("items", dto.getItems());
-        model.addAttribute("sort", sort);
-        return "main";
+        return itemService.getItems(userId, search, pageable)
+                .map(dto -> Rendering.view("main")
+                        .modelAttribute("paging", dto.getPage())
+                        .modelAttribute("items", dto.getItems())
+                        .modelAttribute("sort", sort)
+                        .build()
+                );
     }
 
     @PostMapping("main/items/{id}")
-    public String updateCartInMain(Model model,
-            @PathVariable("id") long itemId,
+    public Mono<Rendering> updateCartInMain(@PathVariable("id") long itemId,
             @RequestParam("action") String action) {
-        cartService.updateCart(userId, itemId, CartAction.fromValue(action));
-        return "redirect:/main/items";
+        return cartService.updateCart(userId, itemId, CartAction.fromValue(action))
+                .thenReturn(Rendering.view("redirect:/main/items").build());
     }
 
     @GetMapping("/items/{id}")
-    public String getItem(Model model,
-            @PathVariable("id") long itemId) {
-        ItemDto item = itemService.getItem(userId, itemId);
-        model.addAttribute("item", item);
-        return "item";
+    public Mono<Rendering> getItem(@PathVariable("id") long itemId) {
+        var item = itemService.getItem(userId, itemId);
+        return Mono.just(Rendering
+                .view("item")
+                .modelAttribute("item", item)
+                .build());
     }
 
     @PostMapping("/items/{id}")
-    public String updateCartInItem(Model model,
-            @PathVariable("id") long itemId,
+    public Mono<Rendering> updateCartInItem(@PathVariable("id") long itemId,
             @RequestParam("action") String action) {
-        cartService.updateCart(userId, itemId, CartAction.fromValue(action));
-        return "redirect:/items/" + itemId;
+        return cartService.updateCart(userId, itemId, CartAction.fromValue(action))
+                .thenReturn(Rendering.view("redirect:/items/" + itemId).build());
     }
 }
