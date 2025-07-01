@@ -24,13 +24,13 @@ import lombok.ToString;
 public class OrderItem {
 
     @Id
-    private long id;
+    private Long id;
 
     @Column("order_id")
-    private long orderId;
+    private Long orderId;
 
     @Column("item_id")
-    private long itemId;
+    private Long itemId;
 
     @Column("quantity")
     private long quantity;

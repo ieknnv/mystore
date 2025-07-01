@@ -107,15 +107,18 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public Mono<Order> buyCart(long userId) {
-        Mono<Cart> cart = cartRepository.findByUserId(userId)
-                .switchIfEmpty(Mono.error(new NoSuchElementException("cart not found")));
-        Flux<CartItemDetailDto> cartItems =
-                cart.flatMapMany(c -> cartItemRepository.findCartItemDetailByCart(c.getId()));
-        Mono<Order> newOrder = cartItems
-                .collectList()
-                .flatMap(list -> orderService.placeOrder(userId, list));
-        return cart
-                .flatMap(c -> cartRepository.clearCart(c.getId()))
-                .then(newOrder);
+        return cartRepository.findByUserId(userId)
+                .switchIfEmpty(Mono.error(new NoSuchElementException("cart not found")))
+                .flatMap(cart ->
+                        cartItemRepository.findCartItemDetailByCart(cart.getId())
+                                .collectList()
+                                .flatMap(cartItems ->
+                                        orderService.placeOrder(userId, cartItems)
+                                                .flatMap(order ->
+                                                        cartRepository.clearCart(cart.getId())
+                                                                .thenReturn(order)
+                                                )
+                                )
+                );
     }
 }

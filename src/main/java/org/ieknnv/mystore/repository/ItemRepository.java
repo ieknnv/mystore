@@ -8,13 +8,9 @@ import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Repository
 public interface ItemRepository extends ReactiveSortingRepository<Item, Long>, ReactiveCrudRepository<Item, Long> {
-
-    @Query("SELECT item_image FROM items WHERE id = :id")
-    Mono<byte[]> findItemImageById(Long id);
 
     @Query("""
     SELECT id, name, description, item_image, price

@@ -1,5 +1,6 @@
 package org.ieknnv.mystore.controller;
 
+import org.ieknnv.mystore.dto.ActionDto;
 import org.ieknnv.mystore.enums.CartAction;
 import org.ieknnv.mystore.enums.SortOrder;
 import org.ieknnv.mystore.service.CartService;
@@ -8,8 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,10 +49,10 @@ public class ItemController {
                 );
     }
 
-    @PostMapping("main/items/{id}")
+    @PostMapping("/main/items/{id}")
     public Mono<Rendering> updateCartInMain(@PathVariable("id") long itemId,
-            @RequestParam("action") String action) {
-        return cartService.updateCart(userId, itemId, CartAction.fromValue(action))
+            @ModelAttribute("actionDto") ActionDto actionDto) {
+        return cartService.updateCart(userId, itemId, CartAction.fromValue(actionDto.getAction()))
                 .thenReturn(Rendering.view("redirect:/main/items").build());
     }
 
@@ -66,8 +67,8 @@ public class ItemController {
 
     @PostMapping("/items/{id}")
     public Mono<Rendering> updateCartInItem(@PathVariable("id") long itemId,
-            @RequestParam("action") String action) {
-        return cartService.updateCart(userId, itemId, CartAction.fromValue(action))
+            @ModelAttribute("actionDto") ActionDto actionDto) {
+        return cartService.updateCart(userId, itemId, CartAction.fromValue(actionDto.getAction()))
                 .thenReturn(Rendering.view("redirect:/items/" + itemId).build());
     }
 }

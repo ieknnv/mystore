@@ -1,5 +1,6 @@
 package org.ieknnv.mystore.controller;
 
+import org.ieknnv.mystore.dto.ActionDto;
 import org.ieknnv.mystore.dto.CartPageDto;
 import org.ieknnv.mystore.enums.CartAction;
 import org.ieknnv.mystore.service.CartService;
@@ -7,9 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
 
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,8 @@ public class CartController {
 
     @PostMapping("cart/items/{id}")
     public Mono<Rendering> updateCart(@PathVariable("id") long itemId,
-            @RequestParam("action") String action) {
-        return cartService.updateCart(userId, itemId, CartAction.fromValue(action))
+            @ModelAttribute("actionDto") ActionDto actionDto) {
+        return cartService.updateCart(userId, itemId, CartAction.fromValue(actionDto.getAction()))
                 .thenReturn(Rendering.view("redirect:/cart/items").build());
     }
 

@@ -1,5 +1,6 @@
 package org.ieknnv.mystore.entity;
 
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -22,8 +23,8 @@ import lombok.ToString;
 public class Order {
 
     @Id
-    private long id;
+    private Long id;
 
     @Column("user_id")
-    private long userId;
+    private Long userId;
 }

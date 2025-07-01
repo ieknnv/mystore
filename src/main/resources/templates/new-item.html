@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<meta charset="utf-8"/>
 <head>
     <meta charset="UTF-8">
     <title>Добавление товара</title>
@@ -43,7 +44,7 @@
 </head>
 <body>
 <h2>Новый товар</h2>
-    <form th:action="@{/admin/items}" method="POST" th:object="${newItemDto}" enctype="multipart/form-data">
+    <form th:action="@{/admin/items}" method="POST" enctype="multipart/form-data">
         <label for="name">Название:</label>
         <input type="text" id="name" name="name" required>
         <label for="description">Описание:</label>

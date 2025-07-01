@@ -33,7 +33,7 @@ public interface CartItemRepository extends ReactiveCrudRepository<CartItem, Lon
     Mono<Void> deleteByCartAndItem(long cartId, long itemId);
 
     @Query("""
-            SELECT ci.id AS id, ci.cart_id AS cartId, ci.item_id AS itemId, it.name AS title,
+            SELECT ci.id AS id, ci.cart_id, ci.item_id, it.name AS title,
                 it.description AS description, it.price AS price, ci.quantity AS quantity
             FROM cart_items AS ci
             JOIN items AS it ON it.id=ci.item_id

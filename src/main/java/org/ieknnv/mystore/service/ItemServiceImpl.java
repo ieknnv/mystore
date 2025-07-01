@@ -45,7 +45,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Mono<byte[]> findImageByItemId(Long id) {
-        return itemRepository.findItemImageById(id);
+        return itemRepository.findById(id).map(Item::getItemImage);
     }
 
     @Override

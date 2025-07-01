@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
         newOrder.setUserId(userId);
         Mono<Order> order = orderRepository.save(newOrder);
         return order
-                .flatMapMany(o -> {
+                .flatMap(o -> {
                     List<OrderItem> orderItems = new ArrayList<>();
                     cartItems.forEach(cartItem -> {
                         var orderItem = new OrderItem();
@@ -43,13 +43,12 @@ public class OrderServiceImpl implements OrderService {
                         orderItem.setQuantity(cartItem.getQuantity());
                         orderItems.add(orderItem);
                     });
-                    return orderItemRepository.saveAll(orderItems);
-                })
-                .then(order);
+                    return orderItemRepository.saveAll(orderItems).then(Mono.just(o));
+                });
     }
 
     @Override
-    public Mono<List<OrderDto>>getOrders(long userId) {
+    public Mono<List<OrderDto>> getOrders(long userId) {
         Flux<Order> orders = orderRepository.findAllByUserId(userId);
         return orders
                 .collectList()

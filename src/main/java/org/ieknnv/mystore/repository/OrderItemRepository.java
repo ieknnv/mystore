@@ -12,7 +12,7 @@ import reactor.core.publisher.Flux;
 public interface OrderItemRepository extends ReactiveCrudRepository<OrderItem, Long> {
 
     @Query("""
-            SELECT id AS oi.id, oi.order_id AS orderId, oi.item_id AS itemId, oi.quantity AS quantity, oi.price AS price,
+            SELECT oi.id AS id, oi.order_id, oi.item_id, oi.quantity AS quantity, oi.price AS price,
                    i.name AS title, i.description AS description
             FROM order_items AS oi
             JOIN items AS i ON oi.item_id = i.id

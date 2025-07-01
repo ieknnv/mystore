@@ -24,17 +24,17 @@ import lombok.ToString;
 public class Cart {
 
     @Id
-    private long id;
+    private Long id;
 
     @Column("user_id")
-    private long userId;
+    private Long userId;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Cart cart = (Cart) o;
-        return id == cart.id;
+        return Objects.equals(id, cart.id);
     }
 
     @Override
