@@ -2,6 +2,7 @@ package org.ieknnv.mystore.repository;
 
 import org.ieknnv.mystore.dto.CartItemDetailDto;
 import org.ieknnv.mystore.entity.CartItem;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -26,6 +27,7 @@ public interface CartItemRepository extends ReactiveCrudRepository<CartItem, Lon
             """)
     Mono<CartItem> findByCartAndItem(long cartId, long itemId);
 
+    @Modifying
     @Query("""
             DELETE FROM cart_items
             WHERE cart_id=:cartId AND item_id=:itemId
