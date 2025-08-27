@@ -1,20 +1,20 @@
 package org.ieknnv.mystore.repository;
 
-import java.util.List;
-
 import org.ieknnv.mystore.entity.Order;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 
+import reactor.core.publisher.Flux;
+
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
 
     @Query("""
-            SELECT o
-            FROM Order AS o
-            WHERE o.user.id=:userId
-            ORDER BY o.id DESC
+            SELECT id, user_id
+            FROM orders
+            WHERE user_id=:userId
+            ORDER BY id DESC
             """)
-    List<Order> findAllByUserId(long userId);
+    Flux<Order> findAllByUserId(long userId);
 }

@@ -7,6 +7,7 @@ import org.ieknnv.mystore.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -15,8 +16,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public User getUser(long userId) {
+    public Mono<User> getUser(long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("user not found"));
+                .switchIfEmpty(Mono.error(new NoSuchElementException("user not found")));
     }
 }

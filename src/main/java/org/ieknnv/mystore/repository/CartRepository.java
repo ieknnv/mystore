@@ -1,19 +1,27 @@
 package org.ieknnv.mystore.repository;
 
-import java.util.Optional;
-
 import org.ieknnv.mystore.entity.Cart;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.r2dbc.repository.Modifying;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 
+import reactor.core.publisher.Mono;
+
 @Repository
-public interface CartRepository extends JpaRepository<Cart, Long> {
+public interface CartRepository extends ReactiveCrudRepository<Cart, Long> {
 
     @Query("""
-            SELECT c
-            FROM Cart AS c
-            WHERE c.user.id=:userId
+            SELECT id, user_id
+            FROM carts
+            WHERE user_id=:userId
             """)
-    Optional<Cart> findByUserId(long userId);
+    Mono<Cart> findByUserId(long userId);
+
+    @Modifying
+    @Query("""
+            DELETE FROM cart_items
+            WHERE cart_id=:cartId
+            """)
+    Mono<Void> clearCart(long cartId);
 }

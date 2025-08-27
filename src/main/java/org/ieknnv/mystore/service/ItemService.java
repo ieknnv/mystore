@@ -1,19 +1,19 @@
 package org.ieknnv.mystore.service;
 
-import java.util.Optional;
-
 import org.ieknnv.mystore.dto.ItemDto;
 import org.ieknnv.mystore.dto.MainPageItemsDto;
 import org.ieknnv.mystore.dto.NewItemDto;
 import org.springframework.data.domain.Pageable;
 
+import reactor.core.publisher.Mono;
+
 public interface ItemService {
 
-    void addNewItem(NewItemDto newItemDto);
+    Mono<Void> addNewItem(NewItemDto newItemDto);
 
-    Optional<byte[]> findImageByItemId(Long id);
+    Mono<byte[]> findImageByItemId(Long id);
 
-    MainPageItemsDto getItems(Long userId, String search, Pageable pageable);
+    Mono<MainPageItemsDto> getItems(Long userId, String search, Pageable pageable);
 
-    ItemDto getItem(long userId, long itemId);
+    Mono<ItemDto> getItem(long userId, long itemId);
 }

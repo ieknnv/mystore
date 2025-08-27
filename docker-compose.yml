@@ -20,9 +20,9 @@ services:
     depends_on:
       - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mystore
-      SPRING_DATASOURCE_USERNAME: myuser
-      SPRING_DATASOURCE_PASSWORD: mypassword
+      SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/mystore
+      SPRING_R2DBC_USERNAME: myuser
+      SPRING_R2DBC_PASSWORD: mypassword
 
 volumes:
   postgres_data:

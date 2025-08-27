@@ -1,27 +1,28 @@
 package org.ieknnv.mystore.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ieknnv.mystore.dto.ItemDto;
 import org.ieknnv.mystore.dto.MainPageItemsDto;
 import org.ieknnv.mystore.dto.NewItemDto;
 import org.ieknnv.mystore.entity.Item;
-import org.ieknnv.mystore.exception.ItemProcessingException;
 import org.ieknnv.mystore.mapper.ItemMapper;
 import org.ieknnv.mystore.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -35,50 +36,60 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public void addNewItem(NewItemDto newItemDto) {
-        try {
-            var newItem = ItemMapper.toEntity(newItemDto);
-            itemRepository.save(newItem);
-        } catch (IOException e) {
-            throw new ItemProcessingException("Can not get item image bytes", e);
-        }
+    public Mono<Void> addNewItem(NewItemDto newItemDto) {
+        return filePartToBytes(newItemDto.getImage())
+                .map(imageBytes -> ItemMapper.toEntity(newItemDto, imageBytes))
+                .flatMap(itemRepository::save)
+                .then();
     }
 
     @Override
-    public Optional<byte[]> findImageByItemId(Long id) {
-        return itemRepository.findItemImageById(id);
+    public Mono<byte[]> findImageByItemId(Long id) {
+        return itemRepository.findById(id).map(Item::getItemImage);
     }
 
     @Override
-    public MainPageItemsDto getItems(Long userId, String search, Pageable pageable) {
-        var itemPage = StringUtils.isEmpty(search) ? itemRepository.findAll(pageable) :
+    public Mono<MainPageItemsDto> getItems(Long userId, String search, Pageable pageable) {
+        Flux<Item> items = StringUtils.isEmpty(search) ? itemRepository.findAllBy(pageable) :
                 itemRepository.findAllBySearchLine(search, pageable);
-        var items = itemPage.getContent();
-        return MainPageItemsDto.builder()
-                .items(chunkItems(items, cartService.getCartItemsForUser(userId)))
-                .page(itemPage)
-                .build();
+        Mono<Long> totalItems = itemRepository.count();
+        Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
+        return itemCount.flatMap(countMap ->
+                items
+                        .map(item -> ItemMapper.toDto(item, countMap.getOrDefault(item.getId(), 0L)))
+                        .buffer(itemsPerLine)
+                        .collectList()
+                        .zipWith(totalItems)
+                        .map(tuple -> {
+                            List<List<ItemDto>> chunkedItems = tuple.getT1();
+                            long total = tuple.getT2();
+
+                            Page<Item> page = new PageImpl<>(List.of(), pageable, total);
+
+                            return MainPageItemsDto.builder()
+                                    .items(chunkedItems)
+                                    .page(page)
+                                    .build();
+                        }));
     }
 
     @Override
-    public ItemDto getItem(long userId, long itemId) {
-        Item item = itemRepository
+    public Mono<ItemDto> getItem(long userId, long itemId) {
+        Mono<Item> item = itemRepository
                 .findById(itemId)
-                .orElseThrow(() -> new NoSuchElementException("item not found"));
-        var itemCount = cartService.getCartItemsForUser(userId);
-        return ItemMapper.toDto(item, itemCount.getOrDefault(item, 0L));
+                .switchIfEmpty(Mono.error(new NoSuchElementException("item not found")));
+        Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
+        return itemCount
+                .flatMap(countMap ->
+                        item.map(i -> ItemMapper.toDto(i, countMap.getOrDefault(i.getId(), 0L))));
     }
 
-    private List<List<ItemDto>> chunkItems(List<Item> items, Map<Item, Long> itemCount) {
-        List<List<ItemDto>> chunks = new ArrayList<>();
-        int listSize = items.size();
-        for (int i = 0; i < listSize; i += itemsPerLine) {
-            int end = Math.min(listSize, i + itemsPerLine);
-            List<Item> subList = new ArrayList<>(items.subList(i, end));
-            chunks.add(subList.stream()
-                    .map(item -> ItemMapper.toDto(item, itemCount.getOrDefault(item, 0L)))
-                    .collect(Collectors.toList()));
-        }
-        return chunks;
+    private Mono<byte[]> filePartToBytes(FilePart filePart) {
+        return DataBufferUtils.join(filePart.content())
+                .map(buffer -> {
+                    byte[] bytes = new byte[buffer.readableByteCount()];
+                    buffer.read(bytes);
+                    return bytes;
+                });
     }
 }

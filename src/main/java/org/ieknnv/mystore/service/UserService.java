@@ -2,7 +2,9 @@ package org.ieknnv.mystore.service;
 
 import org.ieknnv.mystore.entity.User;
 
+import reactor.core.publisher.Mono;
+
 public interface UserService {
 
-    User getUser(long userId);
+    Mono<User> getUser(long userId);
 }

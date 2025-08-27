@@ -1,13 +1,11 @@
 package org.ieknnv.mystore.mapper;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.ieknnv.mystore.dto.CartItemDetailDto;
 import org.ieknnv.mystore.dto.ItemDto;
 import org.ieknnv.mystore.dto.NewItemDto;
-import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Item;
 
 public final class ItemMapper {
@@ -15,11 +13,11 @@ public final class ItemMapper {
     private ItemMapper() {
     }
 
-    public static Item toEntity(NewItemDto dto) throws IOException {
+    public static Item toEntity(NewItemDto dto, byte[] imageBytes) {
         return Item.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
-                .itemImage(dto.getImage() == null ? null : dto.getImage().getBytes())
+                .itemImage(imageBytes)
                 .price(dto.getPrice()).
                 build();
     }
@@ -34,9 +32,19 @@ public final class ItemMapper {
                 .build();
     }
 
-    public static List<ItemDto> toDto(Set<CartItem> cartItems) {
-        return cartItems.stream()
-                .map(ci -> toDto(ci.getItem(), ci.getQuantity()))
+    public static ItemDto toDto(CartItemDetailDto cartItemDetail) {
+        return ItemDto.builder()
+                .id(cartItemDetail.getItemId())
+                .title(cartItemDetail.getTitle())
+                .description(cartItemDetail.getDescription())
+                .price(cartItemDetail.getPrice())
+                .count(cartItemDetail.getQuantity())
+                .build();
+    }
+
+    public static List<ItemDto> toDto(List<CartItemDetailDto> cartItemDetails) {
+        return cartItemDetails.stream()
+                .map(ItemMapper::toDto)
                 .collect(Collectors.toList());
     }
 }

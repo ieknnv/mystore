@@ -2,7 +2,7 @@ package org.ieknnv.mystore.dto;
 
 import java.math.BigDecimal;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.codec.multipart.FilePart;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +20,6 @@ import lombok.ToString;
 public class NewItemDto {
     private String name;
     private String description;
-    private MultipartFile image;
+    private FilePart image;
     private BigDecimal price;
 }

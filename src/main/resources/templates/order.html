@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8"/>
 
 <head>
     <title>Заказ</title>
 </head>
 
 <body>
-<a href="/mystore/orders" style="float:right;">
+<a href="/orders" style="float:right;">
     <b>ЗАКАЗЫ &cudarrr;</b>
 </a>
-<a href="/mystore/cart/items" style="float:right;">
+<a href="/cart/items" style="float:right;">
     <b>КОРЗИНА &cudarrr;</b>
 </a>
-<a href="/mystore/main/items" style="float:right;">
+<a href="/main/items" style="float:right;">
     <b>ГЛАВНАЯ &cudarrr;</b>
 </a>
 <h1 style="text-align:center" th:if="${newOrder}">Поздравляем! Успешная покупка! &#128578;</h1>
@@ -27,7 +28,7 @@
             <table>
                 <tr>
                     <td>
-                        <a th:href="${'/mystore/items/'+item.getItem().getId()}">
+                        <a th:href="${'/items/'+item.getItem().getId()}">
                             <img width="300" height="300" th:src="@{/images/{itemId}(itemId=${item.getItem().getId()})}">
                         </a>
                     </td>

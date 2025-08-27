@@ -3,12 +3,10 @@ package org.ieknnv.mystore.entity;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,24 +21,22 @@ import lombok.ToString;
 @Builder
 @ToString
 
-@Entity
 @Table(name = "items")
 public class Item {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column("name")
     private String name;
 
-    @Column(name = "description", nullable = false)
+    @Column("description")
     private String description;
 
-    @Column(name = "item_image", nullable = false)
+    @Column("item_image")
     private byte[] itemImage;
 
-    @Column(name = "price", nullable = false)
+    @Column("price")
     private BigDecimal price;
 
     @Override
@@ -48,7 +44,7 @@ public class Item {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Item item = (Item) o;
-        return id == item.id;
+        return Objects.equals(id, item.id);
     }
 
     @Override
