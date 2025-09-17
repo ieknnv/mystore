@@ -1,43 +1,137 @@
 openapi: 3.0.3
 info:
-  title: Payment Service API
-  description: API for retrieving user payment balances.
+  title: Payment Service
+  description: Service to process user purchases
+  contact:
+    email: ieknnv@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
 servers:
-  - url: http://localhost:8081
-    description: Local development server
-
+  - url: http://127.0.0.1/api/v1
+tags:
+  - name: payment
+    description: support payments
+  - name: balance
+    description: get balance by user
 paths:
-  /balance/{userId}:
-    get:
-      summary: Get user balance
-      description: Returns the current balance for a given user.
-      operationId: getUserBalance
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          description: Unique identifier of the user
-          schema:
-            type: string
+  /payments:
+    post:
+      tags:
+        - payment
+      description: allow to make payments
+      operationId: makePayment
+      requestBody:
+        description: details of payment
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
       responses:
         '200':
-          description: Successful response with balance
+          description: Successful operation
+        '400':
+          description: Invalid request
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    example: "12345"
-                  balance:
-                    type: number
-                    format: double
-                    example: 250.75
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Payer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '422':
+          description: Not enough money for payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /balances/{userId}:
+    get:
+      tags:
+        - balance
+      description: get balance for certain user
+      operationId: getBalance
+      parameters:
+        - name: userId
+          in: path
+          description: user ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
         '400':
-          description: Invalid userId supplied
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
         '500':
-          description: Internal server error
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+
+    Payment:
+      type: object
+      required:
+        - amount
+        - userId
+      properties:
+        amount:
+          type: number
+          format: double
+        userId:
+          type: integer
+          format: int64
+
+    Balance:
+      type: object
+      required:
+        - amount
+        - userId
+      properties:
+        amount:
+          type: number
+          format: double
+        userId:
+          type: integer
+          format: int64
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        message:
+          type: string
