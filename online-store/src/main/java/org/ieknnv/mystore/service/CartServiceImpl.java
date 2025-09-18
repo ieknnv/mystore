@@ -9,12 +9,14 @@ import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Order;
 import org.ieknnv.mystore.enums.CartAction;
 import org.ieknnv.mystore.enums.PaymentServiceError;
+import org.ieknnv.mystore.exception.PaymentException;
 import org.ieknnv.mystore.mapper.ItemMapper;
 import org.ieknnv.mystore.repository.CartItemRepository;
 import org.ieknnv.mystore.repository.CartRepository;
-import org.ieknnv.mystore.repository.ItemRepository;
 import org.ieknnv.payment.client.api.BalanceApi;
+import org.ieknnv.payment.client.api.PaymentApi;
 import org.ieknnv.payment.client.model.Balance;
+import org.ieknnv.payment.client.model.Payment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -31,11 +33,10 @@ import java.util.NoSuchElementException;
 public class CartServiceImpl implements CartService {
 
     private final OrderService orderService;
-    private final UserService userService;
     private final CartRepository cartRepository;
-    private final ItemRepository itemRepository;
     private final CartItemRepository cartItemRepository;
     private final BalanceApi balanceApi = new BalanceApi();
+    private final PaymentApi paymentApi = new PaymentApi();
 
     @Override
     @Transactional
@@ -160,13 +161,23 @@ public class CartServiceImpl implements CartService {
                 .flatMap(cart ->
                         cartItemRepository.findCartItemDetailByCart(cart.getId())
                                 .collectList()
-                                .flatMap(cartItems ->
-                                        orderService.placeOrder(userId, cartItems)
-                                                .flatMap(order ->
-                                                        cartRepository.clearCart(cart.getId())
-                                                                .thenReturn(order)
-                                                )
-                                )
+                                .flatMap(cartItems -> {
+                                    // Calculate total price
+                                    BigDecimal total = cartItems.stream()
+                                            .map(ci -> ci.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())))
+                                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                    // Make payment before proceeding with creating a new order and clearing user cart
+                                    var payment = new Payment();
+                                    payment.setUserId(userId);
+                                    payment.setAmount(total.doubleValue());
+                                    return paymentApi.makePayment(payment)
+                                            .onErrorMap(ex -> new PaymentException(PaymentServiceError.UNEXPECTED_ERROR.getMessage(), ex))
+                                            .then(orderService.placeOrder(userId, cartItems)
+                                                    .flatMap(order ->
+                                                            cartRepository.clearCart(cart.getId())
+                                                                    .thenReturn(order)
+                                                    ));
+                                })
                 );
     }
 }
