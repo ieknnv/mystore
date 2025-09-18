@@ -50,10 +50,20 @@
         </td>
     </tr>
     <tr>
-        <td style="text-align:right">
-            <form action="/buy" method="post" th:if="${!empty}">
+        <td th:if="${userBalanceAvailable}" style="text-align:right">
+            <b th:text="'Баланс: '+${userBalance} +' руб.'"></b>
+        </td>
+    </tr>
+    <tr>
+        <td th:if="${enablePayment}" style="text-align:right">
+            <form action="/buy" method="post">
                 <button>Купить</button>
             </form>
+        </td>
+        <td th:if="${!enablePayment and !empty}" style="text-align:right">
+            <div style="text-align: right;">
+                <span th:text=${paymentError.getMessage()} style="color:red"></span>
+            </div>
         </td>
     </tr>
 </table>

@@ -1,5 +1,6 @@
 package org.ieknnv.mystore.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.ieknnv.mystore.dto.ActionDto;
 import org.ieknnv.mystore.dto.CartPageDto;
 import org.ieknnv.mystore.enums.CartAction;
@@ -12,8 +13,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.reactive.result.view.Rendering;
-
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -30,15 +29,19 @@ public class CartController {
         Mono<CartPageDto> cartPageDto = cartService.getCartForUser(userId);
         return Mono.just(Rendering
                 .view("cart")
-                .modelAttribute("items", cartPageDto.map(CartPageDto::getItemDtoList))
-                .modelAttribute("total", cartPageDto.map(CartPageDto::getTotal))
-                .modelAttribute("empty", cartPageDto.map(CartPageDto::isCartEmpty))
+                .modelAttribute("items", cartPageDto.mapNotNull(CartPageDto::getItemDtoList))
+                .modelAttribute("total", cartPageDto.mapNotNull(CartPageDto::getTotal))
+                .modelAttribute("empty", cartPageDto.mapNotNull(CartPageDto::isCartEmpty))
+                .modelAttribute("userBalance", cartPageDto.mapNotNull(CartPageDto::getUserBalance))
+                .modelAttribute("paymentError", cartPageDto.mapNotNull(CartPageDto::getPaymentError))
+                .modelAttribute("enablePayment", cartPageDto.mapNotNull(CartPageDto::isEnablePayment))
+                .modelAttribute("userBalanceAvailable", cartPageDto.mapNotNull(CartPageDto::isUserBalanceAvailable))
                 .build());
     }
 
     @PostMapping("cart/items/{id}")
     public Mono<Rendering> updateCart(@PathVariable("id") long itemId,
-            @ModelAttribute("actionDto") ActionDto actionDto) {
+                                      @ModelAttribute("actionDto") ActionDto actionDto) {
         return cartService.updateCart(userId, itemId, CartAction.fromValue(actionDto.getAction()))
                 .thenReturn(Rendering.view("redirect:/cart/items").build());
     }

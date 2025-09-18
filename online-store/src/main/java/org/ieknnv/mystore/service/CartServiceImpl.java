@@ -1,26 +1,30 @@
 package org.ieknnv.mystore.service;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
+import lombok.RequiredArgsConstructor;
 import org.ieknnv.mystore.dto.CartItemDetailDto;
 import org.ieknnv.mystore.dto.CartPageDto;
+import org.ieknnv.mystore.dto.UserBalanceDto;
 import org.ieknnv.mystore.entity.Cart;
 import org.ieknnv.mystore.entity.CartItem;
 import org.ieknnv.mystore.entity.Order;
 import org.ieknnv.mystore.enums.CartAction;
+import org.ieknnv.mystore.enums.PaymentServiceError;
 import org.ieknnv.mystore.mapper.ItemMapper;
 import org.ieknnv.mystore.repository.CartItemRepository;
 import org.ieknnv.mystore.repository.CartRepository;
 import org.ieknnv.mystore.repository.ItemRepository;
+import org.ieknnv.payment.client.api.BalanceApi;
+import org.ieknnv.payment.client.model.Balance;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final ItemRepository itemRepository;
     private final CartItemRepository cartItemRepository;
+    private final BalanceApi balanceApi = new BalanceApi();
 
     @Override
     @Transactional
@@ -83,23 +88,66 @@ public class CartServiceImpl implements CartService {
                 .switchIfEmpty(Mono.error(new NoSuchElementException("cart not found")));
         Flux<CartItemDetailDto> cartItems =
                 cart.flatMapMany(c -> cartItemRepository.findCartItemDetailByCart(c.getId()));
+
+        Mono<UserBalanceDto> userBalance = balanceApi.getBalanceWithHttpInfo(userId)
+                .map(response -> {
+                    Balance balance = response.getBody();
+                    return UserBalanceDto.builder()
+                            .userId(userId)
+                            .amount(BigDecimal.valueOf(balance.getAmount()))
+                            .build();
+                })
+                .onErrorResume(throwable -> {
+                    UserBalanceDto userBalanceDto = new UserBalanceDto();
+                    userBalanceDto.setUserId(userId);
+                    userBalanceDto.setAmount(null);
+                    if (throwable instanceof WebClientResponseException) {
+                        userBalanceDto.setError(PaymentServiceError.UNEXPECTED_ERROR);
+                    } else {
+                        userBalanceDto.setError(PaymentServiceError.SERVICE_UNAVAILABLE);
+                    }
+                    return Mono.just(userBalanceDto);
+                });
+
+
         return cartItems
                 .collectList()
-                .map(list -> {
-                    if (list.isEmpty()) {
+                .zipWith(userBalance)
+                .map(tuple -> {
+                    if (tuple.getT1().isEmpty()) {
                         return CartPageDto.builder()
                                 .itemDtoList(Collections.emptyList())
                                 .cartEmpty(true)
                                 .total(BigDecimal.ZERO)
                                 .build();
                     }
-                    BigDecimal total = list.stream()
+                    BigDecimal total = tuple.getT1().stream()
                             .map(ci -> ci.getPrice().multiply(BigDecimal.valueOf(ci.getQuantity())))
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    var userBalanceDto = tuple.getT2();
+                    var userBalanceAvailable = userBalanceDto.getAmount() != null;
+                    var balance = userBalanceAvailable ? userBalanceDto.getAmount() : BigDecimal.ZERO;
+                    boolean enablePayment;
+                    PaymentServiceError error = null;
+                    if (userBalanceDto.getError() != null) {
+                        enablePayment = false;
+                        error = userBalanceDto.getError();
+                    } else {
+                        if (total.compareTo(balance) > 0) {
+                            enablePayment = false;
+                            error = PaymentServiceError.NOT_ENOUGH_MONEY;
+                        } else {
+                            enablePayment = true;
+                        }
+                    }
                     return CartPageDto.builder()
-                            .itemDtoList(ItemMapper.toDto(list))
+                            .itemDtoList(ItemMapper.toDto(tuple.getT1()))
                             .cartEmpty(false)
                             .total(total)
+                            .userBalanceAvailable(userBalanceAvailable)
+                            .userBalance(balance)
+                            .enablePayment(enablePayment)
+                            .paymentError(error)
                             .build();
                 });
     }
