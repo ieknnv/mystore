@@ -24,7 +24,7 @@ public class ItemCacheServiceImpl implements ItemCacheService {
     @SuppressWarnings("unchecked")
     @Override
     public Mono<List<Item>> findItemsInCache(String search, Pageable pageable) {
-        String key = buildKey(search, pageable);
+        String key = buildItemsKey(search, pageable);
         return redisTemplate.opsForValue()
                 .get(key)
                 .map(obj -> (List<Item>) obj); // cast Object -> List<Item>
@@ -32,7 +32,7 @@ public class ItemCacheServiceImpl implements ItemCacheService {
 
     @Override
     public Mono<Boolean> putItemsToCache(String search, Pageable pageable, List<Item> items) {
-        String key = buildKey(search, pageable);
+        String key = buildItemsKey(search, pageable);
         return redisTemplate.opsForValue()
                 .set(key, items, Duration.ofMinutes(ttlInMinutes));
     }
@@ -47,13 +47,32 @@ public class ItemCacheServiceImpl implements ItemCacheService {
                 .then(Mono.just(true));
     }
 
-    // Build a unique Redis key for search + pagination
-    private String buildKey(String search, Pageable pageable) {
+    @SuppressWarnings("unchecked")
+    @Override
+    public Mono<Item> findItemInCache(long itemId) {
+        return redisTemplate.opsForValue()
+                .get(buildItemKey(itemId))
+                .map(obj -> (Item) obj);
+    }
+
+    @Override
+    public Mono<Boolean> putItemToCache(Item item) {
+        return redisTemplate.opsForValue()
+                .set(buildItemKey(item.getId()), item, Duration.ofMinutes(ttlInMinutes));
+    }
+
+    // Builds a unique Redis key for search + pagination
+    private String buildItemsKey(String search, Pageable pageable) {
         String sanitizedSearch = (search == null || search.isBlank()) ? "ALL" : search.trim();
         return String.format("items:%s:page=%d:size=%d:sort=%s",
                 sanitizedSearch,
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 pageable.getSort());
+    }
+
+    // Builds a unique Redis key for item
+    private String buildItemKey(long id) {
+        return "item:" + id;
     }
 }

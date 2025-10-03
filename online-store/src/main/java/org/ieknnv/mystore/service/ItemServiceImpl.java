@@ -46,7 +46,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Mono<byte[]> findImageByItemId(Long id) {
-        return itemRepository.findById(id).map(Item::getItemImage);
+        return itemCacheService.findItemInCache(id)
+                .map(Item::getItemImage)
+                .switchIfEmpty(
+                        itemRepository.findById(id)
+                                .flatMap(item ->
+                                        itemCacheService.putItemToCache(item).thenReturn(item.getItemImage())
+                                )
+                );
     }
 
     @Override
@@ -88,9 +95,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Mono<ItemDto> getItem(long userId, long itemId) {
-        Mono<Item> item = itemRepository
-                .findById(itemId)
-                .switchIfEmpty(Mono.error(new NoSuchElementException("item not found")));
+        Mono<Item> item = itemCacheService.findItemInCache(itemId)
+                .switchIfEmpty(itemRepository.findById(itemId)
+                        .flatMap(dbItem -> itemCacheService.putItemToCache(dbItem).thenReturn(dbItem))
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("item not found")))
+                );
         Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
         return itemCount
                 .flatMap(countMap ->

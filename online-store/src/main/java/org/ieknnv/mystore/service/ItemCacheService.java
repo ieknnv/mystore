@@ -13,4 +13,8 @@ public interface ItemCacheService {
     Mono<Boolean> putItemsToCache(String search, Pageable pageable, List<Item> items);
 
     Mono<Boolean> evictAllItemsFromCache();
+
+    Mono<Item> findItemInCache(long itemId);
+
+    Mono<Boolean> putItemToCache(Item item);
 }
