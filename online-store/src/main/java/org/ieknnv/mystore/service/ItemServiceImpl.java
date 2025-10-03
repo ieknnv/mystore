@@ -29,6 +29,7 @@ import reactor.core.publisher.Mono;
 public class ItemServiceImpl implements ItemService {
 
     private final CartService cartService;
+    private final ItemCacheService itemCacheService;
     private final ItemRepository itemRepository;
 
     @Value("${application.itemsPerLine:3}")
@@ -50,8 +51,20 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Mono<MainPageItemsDto> getItems(Long userId, String search, Pageable pageable) {
-        Flux<Item> items = StringUtils.isEmpty(search) ? itemRepository.findAllBy(pageable) :
-                itemRepository.findAllBySearchLine(search, pageable);
+        Flux<Item> items = itemCacheService.findItemsInCache(search, pageable)
+                .flatMapMany(Flux::fromIterable)
+                .switchIfEmpty(
+                        Flux.defer(() -> {
+                            Flux<Item> dbItems = StringUtils.isEmpty(search) ? itemRepository.findAllBy(pageable) :
+                                    itemRepository.findAllBySearchLine(search, pageable);
+                            return dbItems
+                                    .collectList()
+                                    .flatMap(itemList ->
+                                            itemCacheService.putItemsToCache(search, pageable, itemList)
+                                                    .thenReturn(itemList))
+                                    .flatMapMany(Flux::fromIterable);
+                        })
+                );
         Mono<Long> totalItems = itemRepository.count();
         Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
         return itemCount.flatMap(countMap ->

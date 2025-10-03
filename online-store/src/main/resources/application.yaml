@@ -10,6 +10,10 @@ spring:
       max-idle-time: 30s                          # Время бездействия соединения перед закрытием
       max-life-time: 10m                          # Максимальное время жизни соединения
       validation-query: SELECT 1                  # SQL-запрос для проверки работоспособности соединения
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
   thymeleaf:
     encoding: UTF-8
 #  sql:
@@ -18,3 +22,5 @@ spring:
 application:
   userId: 1
   itemsPerLine: 3
+  redis:
+    ttlInMinutes: 1
