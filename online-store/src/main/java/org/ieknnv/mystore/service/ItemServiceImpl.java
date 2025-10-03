@@ -1,9 +1,6 @@
 package org.ieknnv.mystore.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.ieknnv.mystore.dto.ItemDto;
 import org.ieknnv.mystore.dto.MainPageItemsDto;
@@ -19,10 +16,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +40,7 @@ public class ItemServiceImpl implements ItemService {
         return filePartToBytes(newItemDto.getImage())
                 .map(imageBytes -> ItemMapper.toEntity(newItemDto, imageBytes))
                 .flatMap(itemRepository::save)
+                .flatMap(saved -> itemCacheService.evictAllItemsFromCache())
                 .then();
     }
 

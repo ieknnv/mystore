@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -34,6 +35,16 @@ public class ItemCacheServiceImpl implements ItemCacheService {
         String key = buildKey(search, pageable);
         return redisTemplate.opsForValue()
                 .set(key, items, Duration.ofMinutes(ttlInMinutes));
+    }
+
+    @Override
+    public Mono<Boolean> evictAllItemsFromCache() {
+        return redisTemplate
+                .keys("items:*") // match all item cache keys
+                .collectList()
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(redisTemplate::delete)
+                .then(Mono.just(true));
     }
 
     // Build a unique Redis key for search + pagination
