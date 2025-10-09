@@ -35,8 +35,8 @@ public class CartServiceImpl implements CartService {
     private final OrderService orderService;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final BalanceApi balanceApi = new BalanceApi();
-    private final PaymentApi paymentApi = new PaymentApi();
+    private final BalanceApi balanceApi;
+    private final PaymentApi paymentApi;
 
     @Override
     @Transactional
@@ -109,7 +109,6 @@ public class CartServiceImpl implements CartService {
                     }
                     return Mono.just(userBalanceDto);
                 });
-
 
         return cartItems
                 .collectList()
