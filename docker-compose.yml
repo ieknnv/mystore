@@ -10,19 +10,54 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
 
   app:  # My store application
-    build:
-      context: .
+    build: online-store/
+    image: onlinestore
     container_name: springboot-app
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_started
+      store-cache:
+        condition: service_healthy
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://db:5432/mystore
       SPRING_R2DBC_USERNAME: myuser
       SPRING_R2DBC_PASSWORD: mypassword
+      SPRING_DATA_REDIS_HOST: store-cache
+      SPRING_DATA_REDIS_PORT: 6379
+      PAYMENT_SERVER_URL: http://payment-service:8081/api/v1
+    networks:
+      - backend
+
+  store-cache:
+    image: redis:8.0.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "12345", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+
+  payment-service:
+    build: payment-service/
+    image: payment
+    container_name: payment
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
 
 volumes:
   postgres_data:
+
+networks:
+  backend:

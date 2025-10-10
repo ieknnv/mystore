@@ -16,11 +16,15 @@ spring:
       port: 6379
   thymeleaf:
     encoding: UTF-8
-#  sql:
-#    init.mode: always
+  sql:
+    init.mode: always
 
 application:
   userId: 1
   itemsPerLine: 3
   redis:
     ttlInMinutes: 1
+
+payment:
+  server:
+    url: http://127.0.0.1:8081/api/v1
