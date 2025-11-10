@@ -16,8 +16,11 @@ CREATE TABLE IF NOT EXISTS "items" (
 
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" bigserial NOT NULL UNIQUE,
-	"name" varchar(256) NOT NULL,
+	"username" varchar(256) NOT NULL UNIQUE,
 	"email" varchar(256) NOT NULL,
+	"password_hash" varchar(1000) NOT NULL,
+	"roles" varchar(1000) NOT NULL,
+	"enabled" boolean NOT NULL,
 	PRIMARY KEY ("id")
 );
 

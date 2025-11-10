@@ -29,8 +29,17 @@ public class User {
     @Column("email")
     private String email;
 
-    @Column("name")
-    private String name;
+    @Column("username")
+    private String username;
+
+    @Column("password_hash")
+    private String passwordHash;
+
+    @Column("roles")
+    private String roles;
+
+    @Column("enabled")
+    private boolean enabled;
 
     @Override
     public boolean equals(Object o) {
