@@ -20,7 +20,6 @@ spring:
     init.mode: always
 
 application:
-  userId: 1
   itemsPerLine: 3
   redis:
     ttlInMinutes: 1

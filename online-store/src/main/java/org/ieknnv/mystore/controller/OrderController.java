@@ -1,18 +1,15 @@
 package org.ieknnv.mystore.controller;
 
-import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.ieknnv.mystore.dto.OrderDto;
 import org.ieknnv.mystore.service.OrderService;
-import org.springframework.beans.factory.annotation.Value;
+import org.ieknnv.mystore.util.SecurityUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
-
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -20,16 +17,15 @@ import reactor.core.publisher.Mono;
 public class OrderController {
 
     private final OrderService orderService;
-
-    @Value("${application.userId}")
-    private long userId;
+    private final SecurityUtil securityUtil;
 
     @GetMapping("/orders")
     Mono<Rendering> getOrders(Model model) {
-        Mono<List<OrderDto>> orderDtos = orderService.getOrders(userId);
-        return Mono.just(Rendering.view("orders")
-                .modelAttribute("orders", orderDtos)
-                .build());
+        return securityUtil.currentUserId()
+                .flatMap(userIdOpt -> orderService.getOrders(userIdOpt.orElse((long) -1)))
+                .map(orderDtos -> Rendering.view("orders")
+                        .modelAttribute("orders", orderDtos)
+                        .build());
     }
 
     @GetMapping("/orders/{id}")

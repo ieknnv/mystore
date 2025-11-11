@@ -1,6 +1,9 @@
 package org.ieknnv.mystore.entity;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -12,6 +15,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
 @Setter
@@ -21,7 +27,7 @@ import lombok.ToString;
 @AllArgsConstructor
 
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
 
     @Id
     private Long id;
@@ -52,5 +58,15 @@ public class User {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Stream.of(roles.split(",")).map(SimpleGrantedAuthority::new).toList();
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
     }
 }

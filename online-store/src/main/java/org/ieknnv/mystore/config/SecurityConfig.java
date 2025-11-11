@@ -26,7 +26,7 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
-                        .pathMatchers("/login").permitAll()
+                        .pathMatchers("/login", "/main/items/**","/images/**","/items/**").permitAll()
                         .pathMatchers("/admin/**").hasRole("ADMIN")
                         .anyExchange().authenticated()
                 )
@@ -39,6 +39,7 @@ public class SecurityConfig {
                                             exchange.getExchange().getResponse()
                                                     .setStatusCode(HttpStatus.OK);
                                         }))))
+                .anonymous(Customizer.withDefaults())
                 .build();
     }
 

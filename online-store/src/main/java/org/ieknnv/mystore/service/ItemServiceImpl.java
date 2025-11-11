@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -73,7 +74,8 @@ public class ItemServiceImpl implements ItemService {
                         })
                 );
         Mono<Long> totalItems = itemRepository.count();
-        Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
+        Mono<Map<Long, Long>> itemCount = userId != null ? cartService.getCartItemsForUser(userId)
+                : Mono.just(Collections.emptyMap());
         return itemCount.flatMap(countMap ->
                 items
                         .map(item -> ItemMapper.toDto(item, countMap.getOrDefault(item.getId(), 0L)))
@@ -100,7 +102,8 @@ public class ItemServiceImpl implements ItemService {
                         .flatMap(dbItem -> itemCacheService.putItemToCache(dbItem).thenReturn(dbItem))
                         .switchIfEmpty(Mono.error(new NoSuchElementException("item not found")))
                 );
-        Mono<Map<Long, Long>> itemCount = cartService.getCartItemsForUser(userId);
+        Mono<Map<Long, Long>> itemCount = userId != -1 ? cartService.getCartItemsForUser(userId)
+                : Mono.just(Collections.emptyMap());
         return itemCount
                 .flatMap(countMap ->
                         item.map(i -> ItemMapper.toDto(i, countMap.getOrDefault(i.getId(), 0L))));
